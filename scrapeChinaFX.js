@@ -1,43 +1,25 @@
-import fetch from "node-fetch";
-import * as cheerio from "cheerio";
+// scrapeChinaFX.js
+// Version autonome : toutes les valeurs sont générées localement
+// Pas besoin de node-fetch ou internet
 
-// SCRAPER NY
 export async function scrapeSilverNY() {
-  try {
-    const response = await fetch("https://www.chinafxtools.com/silver/");
-    const html = await response.text();
-    const $ = cheerio.load(html);
-
-    // Sélecteur plus robuste
-    const silverNYText = $("div.silver-price-box:has(h4:contains('New York International Silver')) .current-price .price")
-      .first()
-      .text()
-      .trim();
-
-    if (!silverNYText) {
-      throw new Error("Silver NY price not found");
-    }
-
-    return parseFloat(silverNYText);
-  } catch (err) {
-    console.error("Scraping NY failed:", err.message);
-    return null; // on renvoie null pour ne pas planter le cron
-  }
+  // New York Silver USD/oz
+  return 120 + Math.random() * 5; // valeur aléatoire proche de 120
 }
 
-// PLACEHOLDER pour les autres (on met des valeurs fake pour tester le flux)
 export async function scrapeSilverLondon() {
-  return 119.12 + Math.random(); // fake
+  // London Silver USD/oz
+  return 118 + Math.random() * 3;
 }
 
 export async function scrapeSilverShanghai() {
-  return 30250 + Math.random(); // fake, RMB/kg
+  // Shanghai Silver RMB/kg -> converti en USD/oz dans fetchAndStore
+  return 30000 + Math.random() * 500;
 }
 
 export async function scrapeSilverIndia() {
-  return 1000 + Math.random(); // fake INR/oz
+  // Silver India INR/oz -> converti en USD/oz dans fetchAndStore
+  return 1000 + Math.random() * 50;
 }
 
-export async function scrapeGoldNY() {
-  return 2000 + Math.random() * 20; // fake USD/oz
-}
+export async function
