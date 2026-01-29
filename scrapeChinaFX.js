@@ -3,23 +3,21 @@
 // Pas besoin de node-fetch ou internet
 
 export async function scrapeSilverNY() {
-  // New York Silver USD/oz
-  return 120 + Math.random() * 5; // valeur aléatoire proche de 120
+  return 120 + Math.random() * 5;
 }
 
 export async function scrapeSilverLondon() {
-  // London Silver USD/oz
   return 118 + Math.random() * 3;
 }
 
 export async function scrapeSilverShanghai() {
-  // Shanghai Silver RMB/kg -> converti en USD/oz dans fetchAndStore
-  return 30000 + Math.random() * 500;
+  return 30000 + Math.random() * 500; // RMB/kg
 }
 
 export async function scrapeSilverIndia() {
-  // Silver India INR/oz -> converti en USD/oz dans fetchAndStore
-  return 1000 + Math.random() * 50;
+  return 1000 + Math.random() * 50; // INR/oz
 }
 
-export async function
+export async function scrapeGoldNY() {
+  return 2000 + Math.random() * 20;
+}
