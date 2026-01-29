@@ -1,45 +1,46 @@
-import { scrapeSilverNY } from "./scrapeChinaFX.js";
+import { db } from "./db.js";
+import { 
+  scrapeSilverNY, 
+  scrapeSilverLondon, 
+  scrapeSilverShanghai, 
+  scrapeSilverIndia, 
+  scrapeGoldNY 
+} from "./scrapeChinaFX.js";
+
+// CONVERT RMB/kg et INR/oz en USD/oz
+const RMB_TO_USD = 0.14;  // à ajuster via vrai taux si disponible
+const INR_TO_USD = 0.012; // idem
 
 export async function fetchAndStore() {
   try {
-    // REAL
     const silverNY = await scrapeSilverNY();
+    const silverLondon = await scrapeSilverLondon();
+    const silverSHA = await scrapeSilverShanghai() * RMB_TO_USD; // USD/oz approx
+    const silverIND = await scrapeSilverIndia() * INR_TO_USD;
+    const goldNY = await scrapeGoldNY();
 
-    // STILL FAKE (pour l’instant)
-    const silverLondon = silverNY + Math.random();
-    const silverSHA = silverNY + 1 + Math.random();
-    const silverIND = silverNY + 1.5 + Math.random();
-    const goldNY = 2000 + Math.random() * 20;
+    if (!silverNY || !silverLondon || !silverSHA || !silverIND || !goldNY) {
+      console.log("One of the scraped values is null, skipping store");
+      return;
+    }
 
+    // Ratios et spreads
     const goldSilverRatio = goldNY / silverNY;
-    const spreadSHA = ((silverSHA - silverNY) / silverNY) * 100;
-    const spreadIND = ((silverIND - silverNY) / silverNY) * 100;
+    const spreadSHA_NY = ((silverSHA - silverNY) / silverNY) * 100; // %
+    const spreadIND_NY = ((silverIND - silverNY) / silverNY) * 100; // %
 
+    const timestamp = new Date().toISOString();
+
+    // Stocker dans SQLite
     db.run(
-      `
-      INSERT INTO market_data
-      (silver_ny, silver_london, silver_sha, silver_ind,
-       gold_silver_ratio, spread_sha_ny, spread_ind_ny)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-      `,
-      [
-        silverNY,
-        silverLondon,
-        silverSHA,
-        silverIND,
-        goldSilverRatio,
-        spreadSHA,
-        spreadIND
-      ]
+      `INSERT INTO market_data 
+      (timestamp, silverNY, silverLondon, silverSHA, silverIND, goldNY, goldSilverRatio, spreadSHA_NY, spreadIND_NY)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [timestamp, silverNY, silverLondon, silverSHA, silverIND, goldNY, goldSilverRatio, spreadSHA_NY, spreadIND_NY]
     );
 
-    db.run(`
-      DELETE FROM market_data
-      WHERE timestamp < datetime('now', '-10 days')
-    `);
-
-    console.log("Data updated (Silver NY real)");
+    console.log("Data updated at", timestamp);
   } catch (err) {
-    console.error("Fetch error:", err.message);
+    console.error("fetchAndStore error:", err.message);
   }
 }
