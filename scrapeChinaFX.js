@@ -1,28 +1,21 @@
-import axios from "axios";
+import fetch from "node-fetch";
 import * as cheerio from "cheerio";
 
 export async function scrapeSilverNY() {
-  const url = "https://www.chinafxtools.com/silver/";
+  try {
+    const response = await fetch("https://www.chinafxtools.com/silver/");
+    const html = await response.text();
 
-  const response = await axios.get(url, {
-    headers: {
-      "User-Agent": "Mozilla/5.0"
+    const $ = cheerio.load(html);
+    const silverNYText = $(".col-md-4:contains('New York International Silver') .current-price .price").text();
+
+    if (!silverNYText) {
+      throw new Error("Silver NY price not found");
     }
-  });
 
-  const $ = cheerio.load(response.data);
-
-  /*
-    ⚠️ Le sélecteur peut changer si le site change.
-    Celui-ci fonctionne actuellement pour Silver NY.
-  */
-  const text = $("tr:contains('New York') td").eq(1).text();
-
-  const price = parseFloat(text.replace(/[^0-9.]/g, ""));
-
-  if (isNaN(price)) {
-    throw new Error("Silver NY price not found");
+    return parseFloat(silverNYText);
+  } catch (err) {
+    console.error("Scraping failed:", err.message);
+    throw err;
   }
-
-  return price;
 }
