@@ -3,7 +3,14 @@ import cron from "node-cron";
 import { fetchAndStore } from "./fetchData.js";
 import { db } from "./db.js";
 
+import cors from "cors";
+
 const app = express();
+
+app.use(cors({
+  origin: "https://bmercier37.github.io"
+}));
+
 const PORT = process.env.PORT || 3000;
 
 // API latest
@@ -31,3 +38,4 @@ fetchAndStore();
 app.listen(PORT, () => {
   console.log("Server running on port", PORT);
 });
+
