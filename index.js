@@ -1,53 +1,46 @@
+// index.js
 import express from "express";
 import cors from "cors";
 import cron from "node-cron";
 import { fetchAndStore } from "./fetchData.js";
-import { db } from "./db.js";
-import { scrapeSilverNY } from "./scrapeChinaFX.js";
+import { initDB, getLatest, getHistory } from "./db.js";
 
 const app = express();
+app.use(cors());
+
 const PORT = process.env.PORT || 3000;
 
-app.use(cors({
-  origin: "https://bmercier37.github.io"
-}));
-
-// ---------- ROUTES API ----------
-
-// latest stored data
-app.get("/api/latest", (req, res) => {
-  db.get(
-    "SELECT * FROM market_data ORDER BY timestamp DESC LIMIT 1",
-    (err, row) => res.json(row)
-  );
+// Routes API
+app.get("/api/latest", async (req, res) => {
+  const db = await initDB();
+  const data = await getLatest(db);
+  await db.close();
+  res.json(data || { error: "No data yet" });
 });
 
-// history (10 days)
-app.get("/api/history", (req, res) => {
-  db.all(
-    "SELECT * FROM market_data ORDER BY timestamp ASC",
-    (err, rows) => res.json(rows)
-  );
+app.get("/api/history", async (req, res) => {
+  const db = await initDB();
+  const data = await getHistory(db, 1000);
+  await db.close();
+  res.json(data);
 });
 
-// 🔍 TEST SCRAPING (TEMPORAIRE)
 app.get("/api/test-scrape", async (req, res) => {
   try {
-    const price = await scrapeSilverNY();
-    res.json({ silverNY: price });
+    const data = await fetchAndStore();
+    res.json(data);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.json({ error: err.message });
   }
 });
 
-// ---------- CRON ----------
+// Cron toutes les 15 minutes
+cron.schedule("*/15 * * * *", async () => {
+  console.log("Cron triggered:", new Date().toISOString());
+  await fetchAndStore();
+});
 
-// every 15 minutes
-cron.schedule("*/15 * * * *", fetchAndStore);
-
-// run once at startup
-fetchAndStore();
-
+// Start server
 app.listen(PORT, () => {
-  console.log("Server running on port", PORT);
+  console.log(`Server running on port ${PORT}`);
 });
